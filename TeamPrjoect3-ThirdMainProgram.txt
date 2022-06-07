@@ -1,0 +1,171 @@
+      ******************************************************************
+      * Authors: Xiaodan Chen,Jing Zhao,Danping Tang,Nicole Yue,Ying Li,Yang Yang
+      * Date:April 10 2021
+      * Purpose:Project3-Third Program-Create a report for each student using student record
+      *         and course record
+      * Tectonics: cobc
+      ******************************************************************
+
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. STUDENT-REPORT.
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+           SELECT Student-File
+                ASSIGN TO "C:\cobol\INDEXSTUFILE3.TXT"
+                  ORGANISATION IS INDEXED
+                  ACCESS MODE IS SEQUENTIAL
+                  RECORD KEY IS STUDENT-NUMBER
+                  FILE STATUS IS STATUS-FIELD.
+
+           SELECT Studies-File
+                ASSIGN TO "C:\cobol\PROGRAM.TXT"
+                  ORGANIZATION IS LINE SEQUENTIAL.
+
+           SELECT STUDENT-REPORT
+                ASSIGN TO "C:\cobol\PJ3REPORT.TXT"
+                  ORGANIZATION IS LINE SEQUENTIAL.
+
+       DATA DIVISION.
+       FILE SECTION.
+       FD  Student-File.
+       01  STUDENT-INFO.
+           05 STUDENT-NUMBER        PIC 9(6).
+           05 TUITION-OWED          PIC 9(4)V99.
+           05 STUDENT-NAME          PIC X(40).
+           05 PROGRAM-OF-STUDY      PIC X(5).
+           05 COURSE-CODE-1         PIC X(7).
+           05 COURSE-AVERAGE-1      PIC 9(3).
+           05 COURSE-CODE-2         PIC X(7).
+           05 COURSE-AVERAGE-2      PIC 9(3).
+           05 COURSE-CODE-3         PIC X(7).
+           05 COURSE-AVERAGE-3      PIC 9(3).
+           05 COURSE-CODE-4         PIC X(7).
+           05 COURSE-AVERAGE-4      PIC 9(3).
+           05 COURSE-CODE-5         PIC X(7).
+           05 COURSE-AVERAGE-5      PIC 9(3).
+
+       FD  Studies-File.
+       01  PROGRAM-INFO.
+           05  PROGRAM-CODE         PIC X(5).
+           05  PROGRAM-NAME         PIC X(20).
+
+       FD  STUDENT-REPORT.
+       01  PRINTLINE                PIC IS  X(90).
+
+
+       WORKING-STORAGE SECTION.
+       01  PageCount                PIC is  99 value zero.
+       01  StudentDetailLine.
+           05  STUDENT-NAME-OUT      PIC X(40).
+           05  filler      PIC X(2)  VALUE SPACE.
+           05  STUDENT-AVERAGE-OUT   PIC ZZ9.
+           05  filler      PIC X(4)  VALUE SPACE.
+           05  PROGRAM-NAME-OUT      PIC X(20).
+           05  filler      PIC X(4)  VALUE SPACE.
+           05  TUITION-OWED-OUT      PIC $$,$$9.99.
+       01  WS-AVG PIC 9(3).
+       01  Heads.
+           05  stuNAME   PIC X(36)  VALUE "STUDENT NAME".
+           05  filler    PIC X(5)   VALUE SPACE.
+           05  AVG       PIC X(9)   VALUE "AVERAGE".
+           05  filler    PIC X(2)   VALUE SPACE.
+           05  pgNAME    PIC X(15)  VALUE "PROGRAM NAME".
+           05  filler    PIC X(5)   VALUE SPACE.
+           05  ownFEE    PIC x(13)  Value "TUITION OWED".
+
+       01  AUDIT-TRAIL.
+           05 READ-COUNTER.
+               10 RCNAME      PIC X(16) VALUE "READ COUNTER: ".
+               10 filler      PIC X(2)  VALUE SPACES.
+               10 RCNUM       PIC 9(3)  VALUE 0.
+           05 WRITE-COUNTER.
+               10 WCNAME      PIC X(16) VALUE "WITTEN COUNTER:".
+               10 filler      PIC X(2)  VALUE SPACES.
+               10 WCNUM       PIC 9(3)  VALUE 0.
+       01  ALL-GRADES            PIC 9(3).
+       01  AVERAGE-GRADE         PIC 9(3).
+       01  SUB                   PIC 9(2) VALUE 1.
+       01  STUDY-EOF-FLAG        PIC X(3).
+       01  STUDENT-EOF-FLAG      PIC X(3).
+       01  STATUS-FIELD          PIC X(2).
+
+       *>  Program Table is copy here.Copy external file.
+           COPY "C:\cobol\PROGRAMTABLE.TXT".
+
+       PROCEDURE DIVISION.
+       100-CREATE-STUDENT-REPORT.
+           PERFORM 200-INITIATE-REPORT.
+           PERFORM 201-PRINT-STUDENT-INFO
+               UNTIL STUDENT-EOF-FLAG = "YES" OR RCNUM > 20.
+           PERFORM 202-TERMINATE-PROJECT.
+           STOP RUN.
+
+       200-INITIATE-REPORT.
+           PERFORM 300-OPEN-FILES.
+           PERFORM 301-LOAD-TABLE
+               VARYING SUB FROM 1 BY 1
+               UNTIL STUDY-EOF-FLAG = "YES" or sub > 20.
+           PERFORM 302-READ-STUDENT-FILE.
+           PERFORM 303-WRITE-HEADER.
+
+       201-PRINT-STUDENT-INFO.
+           PERFORM 304-COMPUTE-AVERAGE.
+           PERFORM 305-FIND-ROGRAM-NAME
+              VARYING SUB FROM 1 BY 1 UNTIL SUB > 20.
+           PERFORM 306-WRITE-STUDENT-INFO.
+           PERFORM 302-READ-STUDENT-FILE.
+
+       202-TERMINATE-PROJECT.
+           PERFORM 307-AUDITOR-DISPLAY.
+           PERFORM 308-CLOSE-FILES.
+
+       300-OPEN-FILES.
+           OPEN INPUT Student-File.
+           OPEN INPUT Studies-File.
+           OPEN OUTPUT STUDENT-REPORT.
+
+       301-LOAD-TABLE.
+           READ Studies-File
+               AT END MOVE "YES" TO STUDY-EOF-FLAG
+               NOT AT END MOVE PROGRAM-INFO To WS-PROGRAM-TABLE(SUB).
+
+       302-READ-STUDENT-FILE.
+           READ Student-File
+               AT END MOVE "YES" TO STUDENT-EOF-FLAG
+               NOT AT END ADD 1 TO RCNUM.
+
+       303-WRITE-HEADER.
+           WRITE PRINTLINE FROM HEADS BEFORE ADVANCING 2 LINE.
+
+       304-COMPUTE-AVERAGE.
+           PERFORM 401-CALL-CALUATE-SUB-PROGRAM.
+
+       305-FIND-ROGRAM-NAME.
+           IF PROGRAM-OF-STUDY = WS-PROGRAM-CODE(SUB)
+               MOVE WS-PROGRAM-NAME(SUB) TO PROGRAM-NAME-OUT.
+
+       306-WRITE-STUDENT-INFO.
+           MOVE STUDENT-NAME TO STUDENT-NAME-OUT.
+           MOVE TUITION-OWED TO TUITION-OWED-OUT.
+           MOVE AVERAGE-GRADE TO STUDENT-AVERAGE-OUT.
+           WRITE PRINTLINE FROM StudentDetailLine.
+           ADD 1 TO WCNUM.
+
+       307-AUDITOR-DISPLAY.
+           DISPLAY READ-COUNTER.
+           DISPLAY WRITE-COUNTER.
+           WRITE PRINTLINE FROM READ-COUNTER AFTER ADVANCING 1 LINE.
+           WRITE PRINTLINE FROM WRITE-COUNTER AFTER ADVANCING 1 LINE.
+
+       308-CLOSE-FILES.
+           CLOSE Student-File, Studies-File, STUDENT-REPORT.
+           
+       401-CALL-CALUATE-SUB-PROGRAM.
+      *>        use call function to call external sub program
+           CALL "C:\Users\danpi\bin\CaluateAverage"
+           USING AVERAGE-GRADE,COURSE-AVERAGE-1,
+           COURSE-AVERAGE-2,COURSE-AVERAGE-3,
+           COURSE-AVERAGE-4,COURSE-AVERAGE-5. 
+           
+       END PROGRAM STUDENT-REPORT.

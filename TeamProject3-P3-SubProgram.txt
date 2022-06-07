@@ -1,0 +1,28 @@
+      ******************************************************************
+      * Authors: Xiaodan Chen,Jing Zhao,Danping Tang,Nicole Yue,Ying Li,Yang Yang
+      * Date:April 10 2021
+      * Purpose:Project3-sub program,create function compute average for calling by main program
+      * Tectonics: cobc
+      ******************************************************************
+
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. CaluateAverage.
+       DATA DIVISION.
+       LINKAGE SECTION.
+       01 LS-AVERAGE-GRADE       PIC 9(3).
+       01 LS-COURSE-AVERAGE-1    PIC 9(3).
+       01 LS-COURSE-AVERAGE-2    PIC 9(3).
+       01 LS-COURSE-AVERAGE-3    PIC 9(3).
+       01 LS-COURSE-AVERAGE-4    PIC 9(3).
+       01 LS-COURSE-AVERAGE-5    PIC 9(3).
+
+       PROCEDURE DIVISION USING
+           LS-AVERAGE-GRADE,LS-COURSE-AVERAGE-1,
+           LS-COURSE-AVERAGE-2,LS-COURSE-AVERAGE-3,
+           LS-COURSE-AVERAGE-4,LS-COURSE-AVERAGE-5.
+
+           COMPUTE LS-AVERAGE-GRADE ROUNDED =( LS-COURSE-AVERAGE-1 +
+                    LS-COURSE-AVERAGE-2 + LS-COURSE-AVERAGE-3
+                    + LS-COURSE-AVERAGE-4 + LS-COURSE-AVERAGE-5 ) / 5.
+
+       EXIT Program.
